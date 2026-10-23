@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Independent Web Bot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white h-screen flex flex-col justify-between">
+    <!-- Header -->
+    <header class="p-4 bg-gray-800 text-center font-bold text-lg border-b border-gray-700 shadow-md">
+        🤖 Flask Independent Bot Hub
+    </header>
+
+    <!-- Chat Container -->
+    <div id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-4 max-w-2xl w-full mx-auto">
+        <div class="flex justify-start">
+            <div class="bg-gray-800 text-gray-200 px-4 py-3 rounded-2xl max-w-xs md:max-w-md shadow">
+                Xin chào! Tôi là chatbot độc lập chạy bằng Flask. Hãy nhập nội dung để bắt đầu trò chuyện.
+            </div>
+        </div>
+    </div>
+
+    <!-- Input Bar -->
+    <div class="p-4 bg-gray-800 border-t border-gray-700">
+        <form id="chat-form" class="flex gap-2 max-w-2xl mx-auto" onsubmit="sendMessage(event)">
+            <input type="text" id="user-input" placeholder="Nhập tin nhắn của bạn..." autocomplete="off"
+                   class="flex-1 bg-gray-700 px-4 py-2 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <button type="submit" class="bg-indigo-600 px-6 py-2 rounded-lg font-semibold hover:bg-indigo-500 transition">
+                Gửi
+            </button>
+        </form>
+    </div>
+
+    <script>
+        async function sendMessage(e) {
+            e.preventDefault();
+            const inputField = document.getElementById('user-input');
+            const message = inputField.value.trim();
+            if (!message) return;
+
+            const chatContainer = document.getElementById('chat-container');
+
+            // Hiển thị tin nhắn người dùng
+            chatContainer.innerHTML += `
+                <div class="flex justify-end">
+                    <div class="bg-indigo-600 text-white px-4 py-3 rounded-2xl max-w-xs md:max-w-md shadow">
+                        ${escapeHtml(message)}
+                    </div>
+                </div>`;
+            
+            inputField.value = '';
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: message })
+                });
+                const data = await response.json();
+
+                // Hiển thị phản hồi từ bot
+                chatContainer.innerHTML += `
+                    <div class="flex justify-start">
+                        <div class="bg-gray-800 text-gray-200 px-4 py-3 rounded-2xl max-w-xs md:max-w-md shadow">
+                            ${escapeHtml(data.reply)}
+                        </div>
+                    </div>`;
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            } catch (error) {
+                console.error('Lỗi kết nối:', error);
+            }
+        }
+
+        function escapeHtml(text) {
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+    </script>
+</body>
+</html>
